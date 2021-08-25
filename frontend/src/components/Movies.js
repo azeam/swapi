@@ -1,19 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { MovieModal } from "./MovieModal";
 
-
 export const Movies = () => {
     const [error, setError] = useState(null);
     const [isLoaded, setIsLoaded] = useState(false);
     const [movies, setMovies] = useState([]);
     const [movieTitle, setMovieTitle] = useState();
-    const [movieCharacters, setMovieCharacters] = useState();
+    const [characterUrls, setCharacterUrls] = useState();
     const [isOpen, setIsOpen] = useState(false);
-
+    const [characters, setCharacters] = useState([]);
+    const [content, setContent] = useState();
+    const mainUrl = "https://swapi.dev/api/films";
+    
     function toggleModal(movie) {
-        setIsOpen(!isOpen);
         setMovieTitle(movie.title);
-        setMovieCharacters(movie.characters);
+        setCharacterUrls(movie.characters);
+        setCharacters([]);
+        setContent("Loading characters...");
+        setIsOpen(!isOpen);
     }
 
     const sortDescending = (movies) => {
@@ -26,20 +30,53 @@ export const Movies = () => {
     }
 
     useEffect(() => {
-        fetch("https://swapi.dev/api/films")
-        .then(res => res.json())
-        .then(
-            (result) => {
-                result = sortDescending(result.results);
-                setIsLoaded(true);
-                setMovies(result);
-            },
-            (error) => {
-                setIsLoaded(true);
-                setError(error);
-            }
-        )
+        let data = localStorage.getItem("moviesList");
+        if (data) {
+            setIsLoaded(true);
+            setMovies(JSON.parse(data));
+        }
+        else {
+            fetch(mainUrl)
+            .then(res => res.json())
+            .then(
+                (result) => {
+                    result = sortDescending(result.results);
+                    setIsLoaded(true);
+                    setMovies(result);
+                    localStorage.setItem("moviesList", JSON.stringify(result)); 
+                },
+                (error) => {
+                    setIsLoaded(true);
+                    setError(error);
+                }
+            )
+        }
     }, [])
+    
+    useEffect(() => {
+        if (!isOpen) {
+            return;
+        }
+        characterUrls.map(url => (
+            fetch(`${url}`)
+            .then(res => res.json())
+            .then(
+                (result) => { setCharacters(characters => [...characters, result.name]) },
+                (error) => { setContent(error.message) }
+            )
+        ))
+    }, [isOpen, characterUrls])
+
+    useEffect(() => {
+        let data = localStorage.getItem(movieTitle);
+        if (data) {
+            setContent(JSON.parse(data));
+        }
+        else if (characterUrls && characters.length === characterUrls.length) {
+            setContent(characters.sort());
+            localStorage.setItem(movieTitle, JSON.stringify(characters.sort()));
+        }
+    }, [characters, characterUrls, movieTitle]);
 
     if (error) {
         return <div>Error: {error.message}</div>;
@@ -59,7 +96,7 @@ export const Movies = () => {
             isOpen={isOpen} 
             toggleModal={toggleModal}
             movieTitle={movieTitle}
-            movieCharacters={movieCharacters}
+            content={content}
         />
         </>
         );

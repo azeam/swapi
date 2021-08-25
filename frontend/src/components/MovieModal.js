@@ -1,44 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import Modal from 'react-modal';
 
 Modal.setAppElement('#root');
 
 export const MovieModal = (props) => {
-    const {isOpen, toggleModal, movieTitle, movieCharacters} = props;
-    const [characters, setCharacters] = useState([]);
-    const [charactersCount, setCharactersCount] = useState();
-    const [content, setContent] = useState([]);
-    
-    useEffect(() => {
-        if (!isOpen) {
-            setCharacters([]);
-            return;
-        }
-        setCharactersCount(movieCharacters.length);
-        setContent("Loading characters...");
-        movieCharacters.map(char => (
-            fetch(`${char}`)
-            .then(res => res.json())
-            .then(
-                (result) => {
-                    setCharacters(characters => [...characters, result.name]);   
-                },
-                (error) => {
-                    setContent(error);
-                }
-            )
-        ))
-    }, [isOpen, movieCharacters])
-
-    useEffect(() => {
-        if (characters.length === charactersCount) {
-            setContent(characters.sort());
-        }
-    }, [characters, charactersCount]);
-
-    if (!movieCharacters) {
-        return null;
-    }
+    const {isOpen, toggleModal, movieTitle, content} = props;
     
     return (
         <Modal
