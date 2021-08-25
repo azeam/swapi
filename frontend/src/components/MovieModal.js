@@ -14,11 +14,11 @@ export const MovieModal = (props) => {
             <>
                 <h2>{movieTitle}</h2>
                 {Array.isArray(content) ? content.map((char) => {
-                    return (<li key={char}>{char}</li>)
+                    return (<div key={char}>{char}</div>)
                 }) : content}
             </>
             <br />
-            <button onClick={toggleModal}>Close modal</button>
+            <button onClick={toggleModal}>Close character list</button>
         </Modal>
     )
 }

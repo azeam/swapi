@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { MovieModal } from "./MovieModal";
+import '../css/style.css';
 
 export const Movies = () => {
     const [error, setError] = useState(null);
@@ -12,6 +13,7 @@ export const Movies = () => {
     const [content, setContent] = useState();
     const mainUrl = "https://swapi.dev/api/films";
     
+    // reset states when changing modals
     function toggleModal(movie) {
         setMovieTitle(movie.title);
         setCharacterUrls(movie.characters);
@@ -29,6 +31,7 @@ export const Movies = () => {
         return movies;
     }
 
+    // fetch movies list on first render and save to LS (if not present)
     useEffect(() => {
         let data = localStorage.getItem("moviesList");
         if (data) {
@@ -53,29 +56,33 @@ export const Movies = () => {
         }
     }, [])
     
+    // fetch characters list when opening modal
     useEffect(() => {
         if (!isOpen) {
             return;
         }
-        characterUrls.map(url => (
-            fetch(`${url}`)
-            .then(res => res.json())
-            .then(
-                (result) => { setCharacters(characters => [...characters, result.name]) },
-                (error) => { setContent(error.message) }
-            )
-        ))
-    }, [isOpen, characterUrls])
-
-    useEffect(() => {
         let data = localStorage.getItem(movieTitle);
         if (data) {
             setContent(JSON.parse(data));
+        }  
+        else {
+            characterUrls.map(url => (
+                fetch(`${url}`)
+                .then(res => res.json())
+                .then(
+                    (result) => { setCharacters(characters => [...characters, result.name]); },
+                    (error) => { setContent(error.message); }
+                )
+            ))
         }
-        else if (characterUrls && characters.length === characterUrls.length) {
+    }, [isOpen, characterUrls, movieTitle])
+
+    // save characters list to LS and update state after loading all
+    useEffect(() => {
+        if (characterUrls && characters.length === characterUrls.length) {
             setContent(characters.sort());
             localStorage.setItem(movieTitle, JSON.stringify(characters.sort()));
-        }
+        }        
     }, [characters, characterUrls, movieTitle]);
 
     if (error) {
@@ -85,19 +92,21 @@ export const Movies = () => {
     } else {
         return (
         <>
-        <ul>
-            {movies.map(movie => (
-                <li key={movie.episode_id}>
-                    <button onClick={() => toggleModal(movie)}>{movie.title} - {movie.release_date}</button>
-                </li>
-            ))}
-        </ul>
-        <MovieModal 
-            isOpen={isOpen} 
-            toggleModal={toggleModal}
-            movieTitle={movieTitle}
-            content={content}
-        />
+            <ul>
+                {movies.map(movie => (
+                    <li key={movie.episode_id}>
+                        <button className="link-button" onClick={() => toggleModal(movie)}>
+                            {movie.title} - {movie.release_date}
+                        </button>
+                    </li>
+                ))}
+            </ul>
+            <MovieModal 
+                isOpen={isOpen} 
+                toggleModal={toggleModal}
+                movieTitle={movieTitle}
+                content={content}
+            />
         </>
         );
     }
